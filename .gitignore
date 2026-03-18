@@ -2,3 +2,5 @@
 documents.csv
 ChromaLearn.code-workspace
 StaticApp
+chroma_db
+.gitattributes
