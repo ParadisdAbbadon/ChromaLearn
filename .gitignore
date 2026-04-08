@@ -1,3 +1,4 @@
+.env
 .DS_Store
 documents.csv
 ChromaLearn.code-workspace
