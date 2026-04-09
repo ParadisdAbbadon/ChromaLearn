@@ -6,3 +6,4 @@ StaticApp
 chroma_db
 .gitattributes
 uploaded_images
+qdrant
