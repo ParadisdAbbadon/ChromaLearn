@@ -5,7 +5,7 @@ import mne
 from mne_bids import BIDSPath, read_raw_bids, get_entity_vals
 import datalad.api as dl
 import joblib
-from aeon.transformations.collection.convolution_based import MiniRocketMultivariate
+from aeon.transformations.collection.convolution_based import MiniRocket
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 
@@ -19,12 +19,12 @@ ROCKET_PATH = "./minirocket.joblib"
 COLLECTION  = "ieeg_patterns"
 EPOCH_TMIN  = -0.5   # seconds before event onset
 EPOCH_TMAX  =  3.0   # seconds after event onset
-VECTOR_SIZE =  9996  # MiniRocketMultivariate default output dim
+VECTOR_SIZE =  9996  # MiniRocket default output dim
 EVENT_ID    = {"seizure": 1, "interictal": 2}
 
 
 # ── HELPERS ───────────────────────────────────────────────────────────────────
-def read_env(path=".env") -> dict:
+def read_env(path=os.path.join(os.path.dirname(__file__), "..", ".env")) -> dict:
     """Parse a .env file and return a dict of key/value pairs."""
     env = {}
     with open(path) as f:
@@ -64,7 +64,7 @@ def get_epochs_for_subject(
     (n_epochs, n_channels, n_timepoints), or (None, None) if no usable data.
     """
     bids_path   = BIDSPath(subject=subject, datatype="ieeg", root=root)
-    subject_dir = os.path.join(root, f"sub-{subject}")
+    subject_dir = os.path.abspath(os.path.join(root, f"sub-{subject}"))
     dataset.get(subject_dir)
 
     try:
@@ -126,16 +126,16 @@ def get_epochs_for_subject(
 
 def embed(
     epochs_array: np.ndarray,
-    rocket: MiniRocketMultivariate | None = None,
+    rocket: MiniRocket | None = None,
     fit: bool = False,
-) -> tuple[np.ndarray, MiniRocketMultivariate]:
+) -> tuple[np.ndarray, MiniRocket]:
     """
     Embed a (n_epochs, n_channels, n_timepoints) array using MiniRocket.
     Pass fit=True (or rocket=None) to fit a new transformer.
     Returns L2-normalised features and the (possibly new) rocket instance.
     """
     if fit or rocket is None:
-        rocket = MiniRocketMultivariate(random_state=42)
+        rocket = MiniRocket(random_state=42)
         rocket.fit(epochs_array)
     features = rocket.transform(epochs_array)
     norms    = np.linalg.norm(features, axis=1, keepdims=True)
